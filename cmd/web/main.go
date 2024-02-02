@@ -8,7 +8,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 )
 
 const webPort = "80"
@@ -53,10 +55,31 @@ func main() {
 		ErrorLog: errorLog,
 	}
 
+	// listen for signals
+	go appConfig.listenForShutdown()
+
 	appConfig.serve()
 
 	// set up mail
 
 	// listen for web connections
 
+}
+
+func (appConfig *Config) listenForShutdown() {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	appConfig.shutdown()
+	os.Exit(0)
+}
+func (appConfig *Config) shutdown() {
+	// perform any cleanup tasks
+	appConfig.InfoLog.Println("Would run cleanup tasks...")
+
+	// block until wg is empty
+	appConfig.Wait.Wait()
+
+	appConfig.InfoLog.Println("closing channels and shutting down applications...")
 }
