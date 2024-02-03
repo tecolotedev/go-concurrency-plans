@@ -3,9 +3,10 @@ package data
 import (
 	"context"
 	"errors"
-	"golang.org/x/crypto/bcrypt"
 	"log"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // User is the structure which holds one user from the database.
@@ -43,7 +44,7 @@ func (u *User) GetAll() ([]*User, error) {
 	order by 
 	    last_name`
 
-	rows, err := db.QueryContext(ctx, query)
+	rows, err := conn.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +98,7 @@ func (u *User) GetByEmail(email string) (*User, error) {
 			    email = $1`
 
 	var user User
-	row := db.QueryRowContext(ctx, query, email)
+	row := conn.QueryRow(ctx, query, email)
 
 	err := row.Scan(
 		&user.ID,
@@ -122,7 +123,7 @@ func (u *User) GetByEmail(email string) (*User, error) {
 			where up.user_id = $1`
 
 	var plan Plan
-	row = db.QueryRowContext(ctx, query, user.ID)
+	row = conn.QueryRow(ctx, query, user.ID)
 
 	err = row.Scan(
 		&plan.ID,
@@ -149,7 +150,7 @@ func (u *User) GetOne(id int) (*User, error) {
 				where id = $1`
 
 	var user User
-	row := db.QueryRowContext(ctx, query, id)
+	row := conn.QueryRow(ctx, query, id)
 
 	err := row.Scan(
 		&user.ID,
@@ -174,7 +175,7 @@ func (u *User) GetOne(id int) (*User, error) {
 			where up.user_id = $1`
 
 	var plan Plan
-	row = db.QueryRowContext(ctx, query, user.ID)
+	row = conn.QueryRow(ctx, query, user.ID)
 
 	err = row.Scan(
 		&plan.ID,
@@ -207,7 +208,7 @@ func (u *User) Update() error {
 		updated_at = $5
 		where id = $6`
 
-	_, err := db.ExecContext(ctx, stmt,
+	_, err := conn.Query(ctx, stmt,
 		u.Email,
 		u.FirstName,
 		u.LastName,
@@ -230,7 +231,7 @@ func (u *User) Delete() error {
 
 	stmt := `delete from users where id = $1`
 
-	_, err := db.ExecContext(ctx, stmt, u.ID)
+	_, err := conn.Query(ctx, stmt, u.ID)
 	if err != nil {
 		return err
 	}
@@ -245,7 +246,7 @@ func (u *User) DeleteByID(id int) error {
 
 	stmt := `delete from users where id = $1`
 
-	_, err := db.ExecContext(ctx, stmt, id)
+	_, err := conn.Query(ctx, stmt, id)
 	if err != nil {
 		return err
 	}
@@ -267,7 +268,7 @@ func (u *User) Insert(user User) (int, error) {
 	stmt := `insert into users (email, first_name, last_name, password, user_active, created_at, updated_at)
 		values ($1, $2, $3, $4, $5, $6, $7) returning id`
 
-	err = db.QueryRowContext(ctx, stmt,
+	err = conn.QueryRow(ctx, stmt,
 		user.Email,
 		user.FirstName,
 		user.LastName,
@@ -295,7 +296,7 @@ func (u *User) ResetPassword(password string) error {
 	}
 
 	stmt := `update users set password = $1 where id = $2`
-	_, err = db.ExecContext(ctx, stmt, hashedPassword, u.ID)
+	_, err = conn.Query(ctx, stmt, hashedPassword, u.ID)
 	if err != nil {
 		return err
 	}
