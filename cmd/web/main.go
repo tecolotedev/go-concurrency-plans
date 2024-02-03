@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"final-project/cmd/web/data"
 	"final-project/cmd/web/db"
 	"final-project/cmd/web/session"
 	"fmt"
@@ -53,6 +54,7 @@ func main() {
 		Wait:     &wg,
 		InfoLog:  infoLog,
 		ErrorLog: errorLog,
+		Models:   data.New(conn),
 	}
 
 	// listen for signals
