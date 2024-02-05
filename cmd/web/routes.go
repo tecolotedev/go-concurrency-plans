@@ -20,7 +20,7 @@ func (appConfig *Config) routes() http.Handler {
 
 	mux.Get("/login", appConfig.LoginPage)
 	mux.Post("/login", appConfig.PostLoginPage)
-	mux.Get("/logout", appConfig.LogoutPage)
+	mux.Get("/logout", appConfig.Logout)
 	mux.Get("/register", appConfig.RegisterPage)
 	mux.Post("/register", appConfig.PostRegisterPage)
 	mux.Get("/activate-account", appConfig.ActivateAccountPage)
