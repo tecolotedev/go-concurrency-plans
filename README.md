@@ -4,3 +4,7 @@ go get github.com/alexedwards/scs/redisstore
 go get github.com/go-chi/chi/v5
 go get github.com/go-chi/chi/v5/middleware
 go get github.com/jackc/pgconn
+
+**Send email:**
+go get github.com/vanng822/go-premailer/premailer
+go get github.com/xhit/go-simple-mail/v2
