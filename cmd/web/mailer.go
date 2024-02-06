@@ -39,7 +39,32 @@ type Message struct {
 
 // a function to listen for messages on the MailerChan
 
+func (appConfig *Config) listenForMail() {
+	fmt.Println("listenForMail")
+	for {
+		fmt.Println("here loop")
+		select {
+		case msg := <-appConfig.Mailer.MailerChan:
+			fmt.Println("mailer chan")
+
+			go appConfig.Mailer.sendEmail(msg, appConfig.Mailer.ErrorChan)
+		case err := <-appConfig.Mailer.ErrorChan:
+			fmt.Println("error chan")
+
+			appConfig.ErrorLog.Println(err)
+
+		case <-appConfig.Mailer.DoneChan:
+			fmt.Println("done chan")
+			return
+
+		}
+
+	}
+}
+
 func (m *Mail) sendEmail(msg Message, errorChan chan error) {
+	defer m.Wait.Done()
+
 	if msg.Template == "" {
 		msg.Template = "mail"
 	}

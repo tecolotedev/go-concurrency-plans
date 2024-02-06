@@ -57,14 +57,16 @@ func main() {
 		Models:   data.New(conn),
 	}
 
+	// set up mail
+	appConfig.Mailer = appConfig.createMail()
+	go appConfig.listenForMail()
+
 	// listen for signals
 	go appConfig.listenForShutdown()
 
-	appConfig.serve()
-
-	// set up mail
-
 	// listen for web connections
+
+	appConfig.serve()
 
 }
 
@@ -82,6 +84,32 @@ func (appConfig *Config) shutdown() {
 
 	// block until wg is empty
 	appConfig.Wait.Wait()
+	appConfig.Mailer.DoneChan <- true // wait till we send all emails
 
 	appConfig.InfoLog.Println("closing channels and shutting down applications...")
+	close(appConfig.Mailer.MailerChan)
+	close(appConfig.Mailer.ErrorChan)
+	close(appConfig.Mailer.DoneChan)
+}
+
+func (appConfig *Config) createMail() Mail {
+	// create channels
+	errorChan := make(chan error)
+	mailChan := make(chan Message)
+	mailerDoneChan := make(chan bool)
+
+	m := Mail{
+		Domain:      "localhost",
+		Host:        "localhost",
+		Port:        1025,
+		Encryption:  "none",
+		FromName:    "Info",
+		FromAddress: "info@mycompany.com",
+		Wait:        appConfig.Wait,
+		ErrorChan:   errorChan,
+		MailerChan:  mailChan,
+		DoneChan:    mailerDoneChan,
+	}
+	return m
+
 }
