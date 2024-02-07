@@ -151,11 +151,46 @@ func (appConfig *Config) ActivateAccountPage(w http.ResponseWriter, r *http.Requ
 	}
 
 	appConfig.Session.Put(r.Context(), "flash", "Account activated")
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
+}
 
-	// generate an invoice
+func (appConfig *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
+	// Get the id of the plan that is choosen
 
-	// send the email with attatchments
+	// Get plan for the database
 
-	// send an email with the invoice attatched
+	// Get the user from the session
+
+	// Generate an invoice
+
+	// Send an email with the invoice attached
+
+	// Generate a manual
+
+	// Send an email with the manual attached
+
+	// Subscribe the user to an account
+
+	// Redirect
+
+}
+
+func (appConfig *Config) ChooseSubscription(w http.ResponseWriter, r *http.Request) {
+	if !appConfig.Session.Exists(r.Context(), "userID") {
+		appConfig.Session.Put(r.Context(), "warning", "You most log in to see this page")
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
+	}
+	plans, err := appConfig.Models.Plan.GetAll()
+	if err != nil {
+		appConfig.ErrorLog.Panicln(err)
+		return
+	}
+
+	dataMap := make(map[string]any)
+	dataMap["plans"] = plans
+
+	appConfig.render(w, r, "plans.page.gohtml", &TemplateData{
+		Data: dataMap,
+	})
 }

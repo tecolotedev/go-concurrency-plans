@@ -1,6 +1,7 @@
 package main
 
 import (
+	"final-project/cmd/web/data"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -19,7 +20,7 @@ type TemplateData = struct {
 	Error         string
 	Authenticated bool
 	Now           time.Time
-	// User *data.User
+	User          *data.User
 }
 
 func (appConfig *Config) render(
@@ -69,7 +70,15 @@ func (appConfig *Config) AddDefaultData(td *TemplateData, r *http.Request) *Temp
 	td.Error = appConfig.Session.PopString(r.Context(), "error")
 	if appConfig.isAuthenticated(r) {
 		td.Authenticated = true
-		// TODO: get more user information
+
+		user, ok := appConfig.Session.Get(r.Context(), "user").(data.User)
+
+		if !ok {
+			appConfig.InfoLog.Println("can't get user from session")
+		} else {
+			td.User = &user
+		}
+
 	}
 	td.Now = time.Now()
 
