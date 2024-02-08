@@ -49,12 +49,14 @@ func main() {
 
 	// set up the application config
 	appConfig := Config{
-		Session:  usersSession,
-		Conn:     conn,
-		Wait:     &wg,
-		InfoLog:  infoLog,
-		ErrorLog: errorLog,
-		Models:   data.New(conn),
+		Session:       usersSession,
+		Conn:          conn,
+		Wait:          &wg,
+		InfoLog:       infoLog,
+		ErrorLog:      errorLog,
+		Models:        data.New(conn),
+		ErrorChan:     make(chan error),
+		ErrorDoneChan: make(chan bool),
 	}
 
 	// set up mail
@@ -64,10 +66,24 @@ func main() {
 	// listen for signals
 	go appConfig.listenForShutdown()
 
+	// listen for errors
+	go appConfig.listenForErrors()
+
 	// listen for web connections
 
 	appConfig.serve()
 
+}
+
+func (appConfig *Config) listenForErrors() {
+	for {
+		select {
+		case err := <-appConfig.ErrorChan:
+			appConfig.ErrorLog.Println(err)
+		case <-appConfig.ErrorDoneChan:
+			return
+		}
+	}
 }
 
 func (appConfig *Config) listenForShutdown() {
@@ -85,11 +101,14 @@ func (appConfig *Config) shutdown() {
 	// block until wg is empty
 	appConfig.Wait.Wait()
 	appConfig.Mailer.DoneChan <- true // wait till we send all emails
+	appConfig.ErrorDoneChan <- true
 
 	appConfig.InfoLog.Println("closing channels and shutting down applications...")
 	close(appConfig.Mailer.MailerChan)
 	close(appConfig.Mailer.ErrorChan)
 	close(appConfig.Mailer.DoneChan)
+	close(appConfig.ErrorChan)
+	close(appConfig.ErrorDoneChan)
 }
 
 func (appConfig *Config) createMail() Mail {

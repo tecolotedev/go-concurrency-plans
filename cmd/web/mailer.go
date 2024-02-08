@@ -27,14 +27,15 @@ type Mail struct {
 }
 
 type Message struct {
-	From         string
-	FromName     string
-	To           string
-	Subject      string
-	Attatchments []string
-	Data         any
-	DataMap      map[string]any
-	Template     string
+	From            string
+	FromName        string
+	To              string
+	Subject         string
+	Attatchments    []string
+	AttatchmentsMap map[string]string
+	Data            any
+	DataMap         map[string]any
+	Template        string
 }
 
 // a function to listen for messages on the MailerChan
@@ -75,11 +76,15 @@ func (m *Mail) sendEmail(msg Message, errorChan chan error) {
 		msg.FromName = m.FromName
 	}
 
-	data := map[string]any{
-		"message": msg.Data,
+	if msg.AttatchmentsMap == nil {
+		msg.AttatchmentsMap = make(map[string]string)
 	}
 
-	msg.DataMap = data
+	if len(msg.DataMap) == 0 {
+		msg.DataMap = make(map[string]any)
+	}
+
+	msg.DataMap["message"] = msg.Data
 
 	// build html mail
 	formattedMessage, err := m.buildHTMLMessage(msg)
@@ -117,6 +122,12 @@ func (m *Mail) sendEmail(msg Message, errorChan chan error) {
 	if len(msg.Attatchments) > 0 {
 		for _, x := range msg.Attatchments {
 			email.AddAttachment(x)
+		}
+	}
+
+	if len(msg.AttatchmentsMap) > 0 {
+		for key, value := range msg.AttatchmentsMap {
+			email.AddAttachment(value, key)
 		}
 	}
 
